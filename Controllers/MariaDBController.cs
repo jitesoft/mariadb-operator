@@ -2,10 +2,10 @@
 using k8s;
 using k8s.Models;
 using k8s.Operators;
-using mariadb_operator.Resources;
+using Jitesoft.MariaDBOperator.Resources;
 using Microsoft.Extensions.Logging;
 
-namespace mariadb_operator.Controllers;
+namespace Jitesoft.MariaDBOperator.Controllers;
 
 public class MariaDBController : Controller<MariaDB>
 {

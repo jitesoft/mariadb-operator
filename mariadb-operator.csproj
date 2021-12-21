@@ -3,11 +3,17 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>mariadb_operator</RootNamespace>
+    <RootNamespace>Jitesoft.MariaDBOperator</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Configurations>Release;Debug</Configurations>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Version)' == '' ">
+    <VersionSuffix Condition=" '$(VersionSuffix)' == '' ">0.0.1</VersionSuffix>
+    <Version Condition=" '$(Version)' == '' ">$(VersionSuffix)</Version>
+  </PropertyGroup>
+  
   <ItemGroup>
     <PackageReference Include="k8s.Operators" Version="1.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />

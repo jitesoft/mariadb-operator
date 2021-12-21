@@ -1,9 +1,9 @@
 ﻿using k8s.Models;
 using k8s.Operators;
 
-namespace mariadb_operator.Resources;
+namespace Jitesoft.MariaDBOperator.Resources;
 
-[CustomResourceDefinition("jitesoft.tech", "v1", "Mariadbs")]
+[CustomResourceDefinition("jitesoft.tech", "v1", "MariaDBs")]
 public class MariaDB : CustomResource<MariaDB.MariaDBSpec, MariaDB.MariaDBStatus>
 {
     public class MariaDBSpec
@@ -17,6 +17,9 @@ public class MariaDB : CustomResource<MariaDB.MariaDBSpec, MariaDB.MariaDBStatus
         public string DbPasswordSecretKey { get; set; } = "password";
     }
 
-    public class MariaDBStatus {}
+    public class MariaDBStatus
+    {
+
+    }
 
 }
