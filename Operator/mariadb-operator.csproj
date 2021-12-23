@@ -15,9 +15,12 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="k8s.Operators" Version="1.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
     <PackageReference Include="prometheus-net.DotNetRuntime" Version="4.2.2" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\submodules\csharp-operator-sdk\src\k8s.Operators\k8s.Operators.csproj" />
   </ItemGroup>
 
 </Project>

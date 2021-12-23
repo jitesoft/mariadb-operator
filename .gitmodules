@@ -1,0 +1,3 @@
+[submodule "submodules/csharp-operator-sdk"]
+	path = submodules/csharp-operator-sdk
+	url = git@github.com:jitesoft/csharp-operator-sdk.git

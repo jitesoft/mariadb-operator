@@ -10,7 +10,7 @@ var assembly = Assembly.GetExecutingAssembly().GetName();
 
 if (!Enum.TryParse(Environment.GetEnvironmentVariable("LOG_LEVEL"), true, out LogLevel logLevel))
 {
-    logLevel = LogLevel.Information;
+    logLevel = LogLevel.Debug;
 }
 
 using var loggerFactory = LoggerFactory.Create(builder =>
@@ -26,13 +26,11 @@ using var loggerFactory = LoggerFactory.Create(builder =>
 var logger = loggerFactory.CreateLogger<Program>();
 
 logger.LogInformation("MariaDB Operator version {Version}", assembly.Version?.ToString(3) ?? "Unversioned");
-logger.LogInformation("Loading configuration");
+logger.LogInformation("Loading configuration ({Type})", KubernetesClientConfiguration.IsInCluster() ? "InCluster" : "File based");
 
 KubernetesClientConfiguration GetConfiguration()
 {
-    return KubernetesClientConfiguration.IsInCluster()
-        ? KubernetesClientConfiguration.InClusterConfig()
-        : KubernetesClientConfiguration.BuildConfigFromConfigFile();
+    return KubernetesClientConfiguration.IsInCluster() ? KubernetesClientConfiguration.InClusterConfig() : KubernetesClientConfiguration.BuildDefaultConfig();
 }
 
 KubernetesClientConfiguration configuration;
@@ -42,7 +40,7 @@ try
 }
 catch (Exception ex)
 {
-    logger.LogCritical(ex.Message);
+    logger.LogCritical(ex, "{Message}", ex.Message);
     Environment.Exit(1);
     return;
 }
@@ -51,8 +49,8 @@ logger.LogInformation("{Type} Configuration loaded successfully",
     (KubernetesClientConfiguration.IsInCluster() ? "InCluster" : "File based"));
 
 using var client = new Kubernetes(configuration);
-var (address, port) = ("127.0.0.1", 9000);
-using var prom = new Prometheus.MetricServer(port, address);
+var (address, port) = ("http://127.0.0.1/metrics", 9000);
+//using var prom = new Prometheus.MetricServer(port, address);
 var op = new Operator(new OperatorConfiguration(), client, loggerFactory);
 
 if (logLevel <= LogLevel.Debug)
@@ -63,7 +61,7 @@ if (logLevel <= LogLevel.Debug)
 
 op.AddControllerOfType<MariaDBController>();
 
-prom.Start();
-logger.LogInformation("Metrics server exposed on {Address}:{Port}", address, port);
+//prom.Start();
+//logger.LogInformation("Metrics server exposed on {Address}:{Port}", address, port);
 logger.LogInformation("Starting operator...");
 await op.StartAsync();

@@ -1,17 +1,17 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.7.0
-  creationTimestamp: null
   name: mariadbs.database.jitesoft.tech
 spec:
   group: database.jitesoft.tech
   names:
-    kind: Mariadb
+    kind: MariaDB
     listKind: MariadbList
     plural: mariadbs
     singular: mariadb
+    categories:
+      - jitesoft
+      - databases
   scope: Namespaced
   versions:
   - name: v1alpha1
@@ -82,18 +82,23 @@ spec:
             required:
             - dbName
             - dbUser
+            - dbPasswordSecretName
             type: object
           status:
             description: MariadbStatus defines the observed state of Mariadb
             type: object
+            properties:
+              currentState:
+                description: State integer used by controller to know what the current state of the resource is.
+                type: integer
         type: object
     served: true
     storage: true
     subresources:
-      status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
+      status:
+        description: MariadbStatus defines the observed state of Mariadb
+        type: object
+        properties:
+          currentState:
+            description: State integer used by controller to know what the current state of the resource is.
+            type: integer
