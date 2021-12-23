@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mariadb-operator", "Operato
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "k8s.Operators", "submodules\csharp-operator-sdk\src\k8s.Operators\k8s.Operators.csproj", "{519ADCE7-CDF5-402E-883F-39FB670B32B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "k8s.Operators.Tests", "submodules\csharp-operator-sdk\tests\k8s.Operators.Tests\k8s.Operators.Tests.csproj", "{1A1AF45A-31E3-4F71-8A6F-DFD7B522234B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{519ADCE7-CDF5-402E-883F-39FB670B32B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{519ADCE7-CDF5-402E-883F-39FB670B32B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{519ADCE7-CDF5-402E-883F-39FB670B32B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A1AF45A-31E3-4F71-8A6F-DFD7B522234B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A1AF45A-31E3-4F71-8A6F-DFD7B522234B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A1AF45A-31E3-4F71-8A6F-DFD7B522234B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A1AF45A-31E3-4F71-8A6F-DFD7B522234B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
