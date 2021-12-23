@@ -14,7 +14,9 @@ public class MariaDBController : Controller<MariaDB>
     {
     }
 
-    private static V1Container GetMariaDBContainerSpec(MariaDB.MariaDBSpec spec)
+    private static string GetDeploymentName(MariaDB resource) => $"{resource.Name()}-deployment";
+
+    private static V1Container GetMariaDBContainerSpec(MariaDBSpec spec)
     {
         return new V1Container
         {
@@ -69,7 +71,7 @@ public class MariaDBController : Controller<MariaDB>
         };
     }
 
-    private static V1DeploymentSpec GetDeploymentSpec(MariaDB.MariaDBSpec spec, IDictionary<string, string> labels)
+    private static V1DeploymentSpec GetDeploymentSpec(MariaDBSpec spec, IDictionary<string, string> labels)
     {
         return new V1DeploymentSpec
         {
@@ -106,7 +108,7 @@ public class MariaDBController : Controller<MariaDB>
         {
             Metadata = new V1ObjectMeta
             {
-                Name = $"{resource.Name()}-deployment",
+                Name = GetDeploymentName(resource),
                 NamespaceProperty = resource.Namespace(),
                 Labels = labels,
             },
@@ -119,54 +121,55 @@ public class MariaDBController : Controller<MariaDB>
         var deployment = GetDeploymentResource(resource);
 
         _logger.LogDebug("Setting resource with name {Name} to Creating status", resource.Name());
-        resource.Status.CurrentStateEnum = Status.Creating;
+        resource.Status.CurrentState = (int)Status.Creating;
 
-        await UpdateStatusAsync(resource, cancellationToken);
+        await UpdateStatusAsync(resource, "mariadb-operator", cancellationToken);
 
         _logger.LogInformation("Creating deployment with name {Name} in namespace {Namespace}", deployment.Name(), deployment.Namespace());
         var result = await _client.CreateNamespacedDeploymentAsync(deployment, resource.Namespace(), cancellationToken: cancellationToken);
 
         _logger.LogDebug("Setting resource to Stable");
-        resource.Status.CurrentStateEnum = Status.Stable;
-        await UpdateStatusAsync(resource, cancellationToken);
+        resource.Status.CurrentState = (int)Status.Stable;
+        await UpdateStatusAsync(resource, "mariadb-operator", cancellationToken);
     }
 
     private async Task Update(MariaDB resource, CancellationToken cancellationToken)
     {
+        var deployment = GetDeploymentResource(resource);
         _logger.LogDebug("Setting resource with name {Name} to Updating status", resource.Name());
-        resource.Status.CurrentStateEnum = Status.Updating;
+        resource.Status.CurrentState = (int)Status.Updating;
 
-        await UpdateStatusAsync(resource, cancellationToken);
+        await UpdateStatusAsync(resource, "mariadb-operator", cancellationToken);
 
         _logger.LogInformation("Replacing deployment with name {Name} in namespace {Namespace}", resource.Name(), resource.Namespace());
-        var result = await UpdateResourceAsync(resource, cancellationToken);
+        var result = await _client.ReplaceNamespacedDeploymentAsync(deployment, GetDeploymentName(resource), resource.Namespace(), cancellationToken: cancellationToken);
 
         _logger.LogDebug("Setting resource to Stable");
-        resource.Status.CurrentStateEnum = Status.Stable;
-        await UpdateStatusAsync(resource, cancellationToken);
+        resource.Status.CurrentState = (int)Status.Stable;
+        await UpdateStatusAsync(resource, "mariadb-operator", cancellationToken);
     }
 
     protected override async Task AddOrModifyAsync(MariaDB resource, CancellationToken cancellationToken)
     {
         try
         {
-            resource.Status ??= new MariaDB.MariaDBStatus();
-            switch (resource.Status.CurrentStateEnum)
+            resource.Status ??= new MariaDBStatus();
+            switch (resource.Status.CurrentState)
             {
-                case Status.Unknown:
+                case (int)Status.Unknown:
                     await Create(resource, cancellationToken);
                     break;
-                case Status.Stable:
+                case (int)Status.Stable:
                     await Update(resource, cancellationToken);
                     break;
-                case Status.Creating:
-                case Status.Updating:
-                case Status.Starting:
-                case Status.Deleting:
+                case (int)Status.Creating:
+                case (int)Status.Updating:
+                case (int)Status.Starting:
+                case (int)Status.Deleting:
                     _logger.LogInformation("Event to modify or create received for {Resource}, but the resource is in a none-edit state", resource.Name());
                     return;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(resource.Status.CurrentState), "Invalid state");
             }
         }
         catch (OperationCanceledException ex)
@@ -175,15 +178,14 @@ public class MariaDBController : Controller<MariaDB>
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("{Exception}", ex.Message);
+            _logger.LogCritical(ex, "{Exception}", ex.Message);
         }
     }
 
     protected override async Task DeleteAsync(MariaDB resource, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Removing resource with name {Name} in namespace {Namespace}", resource.Name(), resource.Namespace());
-        await _client.DeleteNamespacedDeploymentAsync($"{resource.Name()}-deployment", resource.Namespace(), cancellationToken: cancellationToken);
-        await base.DeleteAsync(resource, cancellationToken);
+        await _client.DeleteNamespacedDeploymentAsync(GetDeploymentName(resource), resource.Namespace(), cancellationToken: cancellationToken);
         _logger.LogInformation("Resource deleted");
     }
 }

@@ -11,7 +11,28 @@ metadata:
   name: mariadbs-manager-role
 rules:
   - apiGroups:
-      - database.jitesoft.tech
+      - ""
+    resources:
+      - pods
+    verbs:
+      - watch
+      - list
+      - get
+  - apiGroups:
+      - apps/v1
+    resources:
+      - deployments
+      - pods
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - jitesoft.tech
     resources:
       - mariadbs
     verbs:
@@ -23,13 +44,13 @@ rules:
       - update
       - watch
   - apiGroups:
-      - database.jitesoft.tech
+      - jitesoft.tech
     resources:
       - mariadbs/finalizers
     verbs:
       - update
   - apiGroups:
-      - database.jitesoft.tech
+      - jitesoft.tech
     resources:
       - mariadbs/status
     verbs:

@@ -3,6 +3,7 @@ using k8s;
 using k8s.Operators;
 using k8s.Operators.Logging;
 using Jitesoft.MariaDBOperator.Controllers;
+using Jitesoft.MariaDBOperator.Resources;
 using Microsoft.Extensions.Logging;
 using Microsoft.Rest;
 
@@ -59,7 +60,7 @@ if (logLevel <= LogLevel.Debug)
     ServiceClientTracing.AddTracingInterceptor(new ConsoleTracingInterceptor());
 }
 
-op.AddControllerOfType<MariaDBController>();
+op.AddControllerOfType<MariaDBController, MariaDB>();
 
 //prom.Start();
 //logger.LogInformation("Metrics server exposed on {Address}:{Port}", address, port);
