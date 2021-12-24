@@ -11,6 +11,18 @@ metadata:
   name: mariadbs-manager-role
 rules:
   - apiGroups:
+        - ""
+    resources:
+      - persistentVolumeClaims
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - ""
     resources:
       - pods
@@ -22,7 +34,6 @@ rules:
       - apps/v1
     resources:
       - deployments
-      - pods
     verbs:
       - create
       - delete
