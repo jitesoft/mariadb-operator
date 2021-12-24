@@ -9,16 +9,52 @@ namespace Jitesoft.MariaDBOperator.Controllers;
 
 public class MariaDBController : Controller<MariaDB>
 {
+    private const string MariaDbDataPath = "/var/lib/mysql";
+
     public MariaDBController(OperatorConfiguration configuration, IKubernetes client, ILoggerFactory loggerFactory) :
         base(configuration, client, loggerFactory)
     {
     }
 
     private static string GetDeploymentName(MariaDB resource) => $"{resource.Name()}-deployment";
+    private static string GetDataPvcName(MariaDB resource) => $"{resource.Name()}-pvc";
 
-    private static V1Container GetMariaDBContainerSpec(MariaDBSpec spec)
+    private static V1Container GetMariaDBContainerSpec(MariaDB resource)
     {
-        return new V1Container
+        var spec = resource.Spec;
+
+        var envVariables = new List<V1EnvVar>()
+        {
+            // Backwards compatible!
+            new("MYSQL_USER", spec.DbUser),
+            new("MYSQL_DATABASE", spec.DbName),
+            new("MYSQL_PASSWORD", valueFrom: new V1EnvVarSource
+                {
+                    SecretKeyRef = new V1SecretKeySelector
+                    {
+                        Key = spec.DbPasswordSecretKey,
+                        Name = spec.DbPasswordSecretName,
+                    }
+                }
+            ),
+            // Correct ones!
+            new("MARIADB_RANDOM_ROOT_PASSWORD", "yes"),
+            new("MARIADB_USER", spec.DbUser),
+            new("MARIADB_DATABASE", spec.DbName),
+            new("MARIADB_PASSWORD", valueFrom: new V1EnvVarSource
+                {
+                    SecretKeyRef = new V1SecretKeySelector
+                    {
+                        Key = spec.DbPasswordSecretKey,
+                        Name = spec.DbPasswordSecretName,
+                    }
+                }
+            ),
+        };
+
+        envVariables.AddRange(spec.AdditionalEnvironmentVariables);
+
+        var container = new V1Container
         {
             Name = "mariadb",
             Image = spec.Image,
@@ -40,40 +76,23 @@ public class MariaDBController : Controller<MariaDB>
                     { "memory", new ResourceQuantity("256M") },
                 }
             },
-            Env = new Collection<V1EnvVar>
-            {
-                // Backwards compatible!
-                new("MYSQL_USER", spec.DbUser),
-                new("MYSQL_DATABASE", spec.DbName),
-                new("MYSQL_PASSWORD", valueFrom: new V1EnvVarSource
-                    {
-                        SecretKeyRef = new V1SecretKeySelector
-                        {
-                            Key = spec.DbPasswordSecretKey,
-                            Name = spec.DbPasswordSecretName,
-                        }
-                    }
-                ),
-                // Correct ones!
-                new("MARIADB_RANDOM_ROOT_PASSWORD", "yes"),
-                new("MARIADB_USER", spec.DbUser),
-                new("MARIADB_DATABASE", spec.DbName),
-                new("MARIADB_PASSWORD", valueFrom: new V1EnvVarSource
-                    {
-                        SecretKeyRef = new V1SecretKeySelector
-                        {
-                            Key = spec.DbPasswordSecretKey,
-                            Name = spec.DbPasswordSecretName,
-                        }
-                    }
-                ),
-            }
+            Env = envVariables,
         };
+
+        container.VolumeMounts = new Collection<V1VolumeMount>();
+        spec.AdditionalVolumes.ForEach(v => container.VolumeMounts.Add(v.Mount));
+
+        if (spec.DataVolumeClaim != null)
+        {
+            container.VolumeMounts.Add(new V1VolumeMount(MariaDbDataPath, "mariadb-data"));
+        }
+
+        return container;
     }
 
-    private static V1DeploymentSpec GetDeploymentSpec(MariaDBSpec spec, IDictionary<string, string> labels)
+    private static V1DeploymentSpec GetDeploymentSpec(MariaDB resource, IDictionary<string, string> labels)
     {
-        return new V1DeploymentSpec
+        var deploymentSpec = new V1DeploymentSpec
         {
             Replicas = 1,
             Selector = new V1LabelSelector(null, labels),
@@ -87,11 +106,26 @@ public class MariaDBController : Controller<MariaDB>
                 {
                     Containers = new Collection<V1Container>
                     {
-                        GetMariaDBContainerSpec(spec),
+                        GetMariaDBContainerSpec(resource),
                     }
                 }
             }
         };
+
+        deploymentSpec.Template.Spec.Volumes = new Collection<V1Volume>();
+        resource.Spec.AdditionalVolumes.ForEach(v => deploymentSpec.Template.Spec.Volumes.Add(v.Volume));
+
+        if (resource.Spec.DataVolumeClaim != null)
+        {
+            deploymentSpec.Template.Spec.Volumes.Add(
+                new V1Volume (
+                    persistentVolumeClaim: new V1PersistentVolumeClaimVolumeSource(GetDataPvcName(resource), false),
+                    name: "mariadb-data"
+                )
+            );
+        }
+
+        return deploymentSpec;
     }
 
     private static V1Deployment GetDeploymentResource(MariaDB resource)
@@ -112,8 +146,46 @@ public class MariaDBController : Controller<MariaDB>
                 NamespaceProperty = resource.Namespace(),
                 Labels = labels,
             },
-            Spec = GetDeploymentSpec(resource.Spec, labels),
+            Spec = GetDeploymentSpec(resource, labels),
         };
+    }
+
+    private async Task<V1PersistentVolumeClaim> CreatePvc(MariaDB resource, CancellationToken cancellationToken)
+    {
+        var claimData = resource.Spec.DataVolumeClaim;
+
+        var claimMeta = new V1ObjectMeta()
+        {
+            Name = GetDataPvcName(resource),
+            NamespaceProperty = resource.Namespace(),
+        };
+
+        var claimSpec = new V1PersistentVolumeClaimSpec()
+        {
+            AccessModes = new List<string> { "ReadWriteOnce" },
+            StorageClassName = claimData?.StorageType ?? "",
+            Resources = new V1ResourceRequirements(
+                requests: new Dictionary<string, ResourceQuantity>
+                {
+                    { "storage", new ResourceQuantity(claimData!.Size) }
+                }
+            )
+        };
+
+        claimSpec.Validate();
+        claimMeta.Validate();
+
+        var claim = await _client.CreateNamespacedPersistentVolumeClaimAsync(
+            new V1PersistentVolumeClaim(
+                metadata: claimMeta,
+                spec: claimSpec
+            ),
+            resource.Namespace(),
+            fieldManager: "mariadb-operator",
+            cancellationToken: cancellationToken
+        );
+
+        return claim;
     }
 
     private async Task Create(MariaDB resource, CancellationToken cancellationToken)
@@ -124,6 +196,19 @@ public class MariaDBController : Controller<MariaDB>
         resource.Status.CurrentState = (int)Status.Creating;
 
         await UpdateStatusAsync(resource, "mariadb-operator", cancellationToken);
+
+        if (resource.Spec.DataVolumeClaim != null)
+        {
+            _logger.LogInformation(
+                "Creating persistent volume claim for {Name} in namespace {Namespace}",
+                resource.Name(),
+                resource.Namespace()
+            );
+
+            var claim = await CreatePvc(resource, cancellationToken);
+
+            _logger.LogInformation("Persistent volume claim {Name} created", claim.Metadata.Name);
+        }
 
         _logger.LogInformation("Creating deployment with name {Name} in namespace {Namespace}", deployment.Name(), deployment.Namespace());
         var result = await _client.CreateNamespacedDeploymentAsync(deployment, resource.Namespace(), cancellationToken: cancellationToken);
@@ -174,7 +259,7 @@ public class MariaDBController : Controller<MariaDB>
         }
         catch (OperationCanceledException ex)
         {
-            _logger.LogInformation("Operation canceled");
+            _logger.LogInformation(ex, "Operation canceled");
         }
         catch (Exception ex)
         {

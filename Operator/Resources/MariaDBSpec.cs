@@ -1,6 +1,7 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
+using Jitesoft.MariaDBOperator.crd;
 using k8s.Models;
-using Newtonsoft.Json;
 
 namespace Jitesoft.MariaDBOperator.Resources;
 
@@ -13,14 +14,12 @@ public class MariaDBSpec
     /// Image to use in primary container.
     /// Defaults to mariadb:10.7
     /// </summary>
-    [JsonProperty("image")]
     [JsonPropertyName("image")]
     public string Image { get; set; } = "mariadb:10.7";
 
     /// <summary>
     /// Port to expose in deployment.
     /// </summary>
-    [JsonProperty("port")]
     [JsonPropertyName("port")]
     public int Port { get; set; } = 3306;
 
@@ -28,35 +27,49 @@ public class MariaDBSpec
     /// Optional resource limits and requests.
     /// Defaults to limit.cpu: 500m, limit.memory: 512M, requests.cpu: 200m, requests.memory: 256M
     /// </summary>
-    [JsonProperty("resources")]
     [JsonPropertyName("resources")]
     public V1ResourceRequirements? Resources { get; set; } = new();
 
     /// <summary>
     /// Database user to create on first startup.
     /// </summary>
-    [JsonProperty("dbUser")]
     [JsonPropertyName("dbUser")]
     public string DbUser { get; set; } = null!;
 
     /// <summary>
     /// Name of database to create on first startup.
     /// </summary>
-    [JsonProperty("dbName")]
     [JsonPropertyName("dbName")]
     public string DbName { get; set; } = null!;
 
     /// <summary>
     /// Name of secret where password for dbUser is stored.
     /// </summary>
-    [JsonProperty("dbPasswordSecretName")]
     [JsonPropertyName("dbPasswordSecretName")]
     public string DbPasswordSecretName { get; set; } = null!;
 
     /// <summary>
     /// Key in DbPasswordSecretName which the password is stored in.
     /// </summary>
-    [JsonProperty("dbPasswordSecretKey")]
     [JsonPropertyName("dbPasswordSecretKey")]
     public string DbPasswordSecretKey { get; set; } = "password";
+
+    /// <summary>
+    /// Additional mounts to add to the primary container.
+    /// </summary>
+    [JsonPropertyName("additionalVolumes")]
+    public List<ExtraVolumeSpec> AdditionalVolumes { get; set; } = new List<ExtraVolumeSpec>();
+
+    /// <summary>
+    /// Additional environment variables to add to the primary container.
+    /// </summary>
+    [JsonPropertyName("additionalEnvironmentVariables")]
+    public List<V1EnvVar> AdditionalEnvironmentVariables { get; set; } = new List<V1EnvVar>();
+
+    /// <summary>
+    /// Persistent volume claim to use as data storage.
+    /// If null, no claim will be created and the storage will be in memory.
+    /// </summary>
+    [JsonPropertyName("dataVolumeClaim")]
+    public DataPvcSpec? DataVolumeClaim { get; set; } = null;
 }
