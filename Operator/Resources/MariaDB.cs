@@ -1,4 +1,4 @@
-﻿using k8s.Operators;
+﻿using Kubernetes.OperatorSdk;
 
 namespace Jitesoft.MariaDBOperator.Resources;
 

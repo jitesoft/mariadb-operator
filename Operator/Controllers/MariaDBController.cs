@@ -1,7 +1,9 @@
 ﻿using System.Collections.ObjectModel;
+using AutoMapper.Internal;
+using Jitesoft.MariaDBOperator.crd;
 using k8s;
 using k8s.Models;
-using k8s.Operators;
+using Kubernetes.OperatorSdk;
 using Jitesoft.MariaDBOperator.Resources;
 using Microsoft.Extensions.Logging;
 
@@ -9,15 +11,12 @@ namespace Jitesoft.MariaDBOperator.Controllers;
 
 public class MariaDBController : Controller<MariaDB>
 {
-    private const string MariaDbDataPath = "/var/lib/mysql";
-
     public MariaDBController(OperatorConfiguration configuration, IKubernetes client, ILoggerFactory loggerFactory) :
         base(configuration, client, loggerFactory)
     {
     }
 
     private static string GetDeploymentName(MariaDB resource) => $"{resource.Name()}-deployment";
-    private static string GetDataPvcName(MariaDB resource) => $"{resource.Name()}-pvc";
 
     private static V1Container GetMariaDBContainerSpec(MariaDB resource)
     {
@@ -51,7 +50,6 @@ public class MariaDBController : Controller<MariaDB>
                 }
             ),
         };
-
         envVariables.AddRange(spec.AdditionalEnvironmentVariables);
 
         var container = new V1Container
@@ -80,11 +78,16 @@ public class MariaDBController : Controller<MariaDB>
         };
 
         container.VolumeMounts = new Collection<V1VolumeMount>();
-        spec.AdditionalVolumes.ForEach(v => container.VolumeMounts.Add(v.Mount));
+        spec.AdditionalVolumes.ToList().ForEach(v => container.VolumeMounts.Add(v.Mount));
 
         if (spec.DataVolumeClaim != null)
         {
-            container.VolumeMounts.Add(new V1VolumeMount(MariaDbDataPath, "mariadb-data"));
+            container.VolumeMounts.Add(new()
+            {
+                Name = DataPvcSpec.DataVolumeName,
+                MountPath = DataPvcSpec.MariaDbDataPath,
+                ReadOnlyProperty = false,
+            });
         }
 
         return container;
@@ -92,6 +95,7 @@ public class MariaDBController : Controller<MariaDB>
 
     private static V1DeploymentSpec GetDeploymentSpec(MariaDB resource, IDictionary<string, string> labels)
     {
+        resource.Spec.Labels.ForAll(kvp => labels.TryAdd(kvp.Key, kvp.Value));
         var deploymentSpec = new V1DeploymentSpec
         {
             Replicas = 1,
@@ -101,6 +105,7 @@ public class MariaDBController : Controller<MariaDB>
                 Metadata = new V1ObjectMeta
                 {
                     Labels = labels,
+                    Annotations = resource.Spec.Annotations,
                 },
                 Spec = new V1PodSpec
                 {
@@ -113,15 +118,21 @@ public class MariaDBController : Controller<MariaDB>
         };
 
         deploymentSpec.Template.Spec.Volumes = new Collection<V1Volume>();
-        resource.Spec.AdditionalVolumes.ForEach(v => deploymentSpec.Template.Spec.Volumes.Add(v.Volume));
+        resource.Spec.AdditionalVolumes.ToList().ForEach(
+            v => deploymentSpec.Template.Spec.Volumes.Add(v.Volume)
+        );
 
         if (resource.Spec.DataVolumeClaim != null)
         {
             deploymentSpec.Template.Spec.Volumes.Add(
-                new V1Volume (
-                    persistentVolumeClaim: new V1PersistentVolumeClaimVolumeSource(GetDataPvcName(resource), false),
-                    name: "mariadb-data"
-                )
+                new()
+                {
+                    Name = DataPvcSpec.DataVolumeName,
+                    PersistentVolumeClaim = new(
+                        DataPvcSpec.GetPvcName(resource.Name()),
+                        false
+                    ),
+                }
             );
         }
 
@@ -150,44 +161,6 @@ public class MariaDBController : Controller<MariaDB>
         };
     }
 
-    private async Task<V1PersistentVolumeClaim> CreatePvc(MariaDB resource, CancellationToken cancellationToken)
-    {
-        var claimData = resource.Spec.DataVolumeClaim;
-
-        var claimMeta = new V1ObjectMeta()
-        {
-            Name = GetDataPvcName(resource),
-            NamespaceProperty = resource.Namespace(),
-        };
-
-        var claimSpec = new V1PersistentVolumeClaimSpec()
-        {
-            AccessModes = new List<string> { "ReadWriteOnce" },
-            StorageClassName = claimData?.StorageType ?? "",
-            Resources = new V1ResourceRequirements(
-                requests: new Dictionary<string, ResourceQuantity>
-                {
-                    { "storage", new ResourceQuantity(claimData!.Size) }
-                }
-            )
-        };
-
-        claimSpec.Validate();
-        claimMeta.Validate();
-
-        var claim = await _client.CreateNamespacedPersistentVolumeClaimAsync(
-            new V1PersistentVolumeClaim(
-                metadata: claimMeta,
-                spec: claimSpec
-            ),
-            resource.Namespace(),
-            fieldManager: "mariadb-operator",
-            cancellationToken: cancellationToken
-        );
-
-        return claim;
-    }
-
     private async Task Create(MariaDB resource, CancellationToken cancellationToken)
     {
         var deployment = GetDeploymentResource(resource);
@@ -205,7 +178,14 @@ public class MariaDBController : Controller<MariaDB>
                 resource.Namespace()
             );
 
-            var claim = await CreatePvc(resource, cancellationToken);
+            var claim = await _client.CreateNamespacedPersistentVolumeClaimAsync(
+                resource.Spec.DataVolumeClaim.ToPvc(
+                    resource.Name(),
+                    resource.Namespace()
+                ),
+                resource.Namespace(),
+                cancellationToken: cancellationToken
+            );
 
             _logger.LogInformation("Persistent volume claim {Name} created", claim.Metadata.Name);
         }

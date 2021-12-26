@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using k8s;
-using k8s.Operators;
-using k8s.Operators.Logging;
+using Kubernetes.OperatorSdk;
+using Kubernetes.OperatorSdk.Logging;
 using Jitesoft.MariaDBOperator.Controllers;
 using Jitesoft.MariaDBOperator.Resources;
 using Microsoft.Extensions.Logging;
@@ -49,7 +49,7 @@ catch (Exception ex)
 logger.LogInformation("{Type} Configuration loaded successfully",
     (KubernetesClientConfiguration.IsInCluster() ? "InCluster" : "File based"));
 
-using var client = new Kubernetes(configuration);
+using var client = new k8s.Kubernetes(configuration);
 var (address, port) = ("http://127.0.0.1/metrics", 9000);
 //using var prom = new Prometheus.MetricServer(port, address);
 var op = new Operator(new OperatorConfiguration(), client, loggerFactory);
