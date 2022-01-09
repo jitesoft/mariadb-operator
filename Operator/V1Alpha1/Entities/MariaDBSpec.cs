@@ -1,9 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Jitesoft.MariaDBOperator.crd;
 using k8s.Models;
 
-namespace Jitesoft.MariaDBOperator.Resources;
+namespace Jitesoft.MariaDBOperator.V1Alpha1.Entities;
 
 /// <summary>
 /// Spec for a single MariaDB instance.

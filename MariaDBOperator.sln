@@ -1,17 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mariadb-operator", "Operator\mariadb-operator.csproj", "{2A7EE34A-3D74-4E78-B22E-14C1A9048A55}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{0AADFD64-A8ED-4366-8419-1FE5CB12A311}"
 	ProjectSection(SolutionItems) = preProject
-		kube\crd\crd.yml = kube\crd\crd.yml
-		kube\operator.yml = kube\operator.yml
-		kube\rbac-cluster.yml = kube\rbac-cluster.yml
 		.gitignore = .gitignore
 		Dockerfile = Dockerfile
 		LICENSE = LICENSE
 		README.md = README.md
+		.gitalb-ci.yml = .gitalb-ci.yml
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "operator", "Operator\operator.csproj", "{1A6EAF52-12C9-4DE0-9314-3082F8EF9703}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,9 +17,9 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2A7EE34A-3D74-4E78-B22E-14C1A9048A55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2A7EE34A-3D74-4E78-B22E-14C1A9048A55}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2A7EE34A-3D74-4E78-B22E-14C1A9048A55}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2A7EE34A-3D74-4E78-B22E-14C1A9048A55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A6EAF52-12C9-4DE0-9314-3082F8EF9703}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A6EAF52-12C9-4DE0-9314-3082F8EF9703}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A6EAF52-12C9-4DE0-9314-3082F8EF9703}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A6EAF52-12C9-4DE0-9314-3082F8EF9703}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

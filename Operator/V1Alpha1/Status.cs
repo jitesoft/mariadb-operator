@@ -1,4 +1,4 @@
-﻿namespace Jitesoft.MariaDBOperator;
+﻿namespace Jitesoft.MariaDBOperator.V1Alpha1;
 
 public enum Status
 {
@@ -7,7 +7,8 @@ public enum Status
     Creating,
     Updating,
     Starting,
-    Deleting,
 
     Stable,
+    Broken,
+    Stopped
 }

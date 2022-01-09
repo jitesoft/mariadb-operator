@@ -1,0 +1,786 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mariadbs.jitesoft.tech
+spec:
+  group: jitesoft.tech
+  names:
+    kind: MariaDB
+    listKind: MariaDBList
+    plural: mariadbs
+    singular: mariadb
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status object for the entity.
+            properties:
+              currentState:
+                type: string
+              hasVolume:
+                type: boolean
+              stateTsMs:
+                format: int64
+                type: integer
+              stateTs:
+                format: int64
+                type: integer
+            type: object
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              image:
+                type: string
+              port:
+                format: int32
+                type: integer
+              resources:
+                nullable: true
+                properties:
+                  limits:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                  requests:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+                type: object
+              dbUser:
+                type: string
+              dbName:
+                type: string
+              dbPasswordSecretName:
+                type: string
+              dbPasswordSecretKey:
+                type: string
+              additionalVolumes:
+                items:
+                  properties:
+                    volume:
+                      properties:
+                        awsElasticBlockStore:
+                          properties:
+                            fsType:
+                              type: string
+                            partition:
+                              format: int32
+                              nullable: true
+                              type: integer
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            volumeID:
+                              type: string
+                          type: object
+                        azureDisk:
+                          properties:
+                            cachingMode:
+                              type: string
+                            diskName:
+                              type: string
+                            diskURI:
+                              type: string
+                            fsType:
+                              type: string
+                            kind:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                          type: object
+                        azureFile:
+                          properties:
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            secretName:
+                              type: string
+                            shareName:
+                              type: string
+                          type: object
+                        cephfs:
+                          properties:
+                            monitors:
+                              items:
+                                type: string
+                              type: array
+                            path:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            secretFile:
+                              type: string
+                            secretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                            user:
+                              type: string
+                          type: object
+                        cinder:
+                          properties:
+                            fsType:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            secretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                            volumeID:
+                              type: string
+                          type: object
+                        configMap:
+                          properties:
+                            defaultMode:
+                              format: int32
+                              nullable: true
+                              type: integer
+                            items:
+                              items:
+                                properties:
+                                  key:
+                                    type: string
+                                  mode:
+                                    format: int32
+                                    nullable: true
+                                    type: integer
+                                  path:
+                                    type: string
+                                type: object
+                              type: array
+                            name:
+                              type: string
+                            optional:
+                              nullable: true
+                              type: boolean
+                          type: object
+                        csi:
+                          properties:
+                            driver:
+                              type: string
+                            fsType:
+                              type: string
+                            nodePublishSecretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            volumeAttributes:
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                          type: object
+                        downwardAPI:
+                          properties:
+                            defaultMode:
+                              format: int32
+                              nullable: true
+                              type: integer
+                            items:
+                              items:
+                                properties:
+                                  fieldRef:
+                                    properties:
+                                      apiVersion:
+                                        type: string
+                                      fieldPath:
+                                        type: string
+                                    type: object
+                                  mode:
+                                    format: int32
+                                    nullable: true
+                                    type: integer
+                                  path:
+                                    type: string
+                                  resourceFieldRef:
+                                    properties:
+                                      containerName:
+                                        type: string
+                                      divisor:
+                                        properties:
+                                          format:
+                                            enum:
+                                            - DecimalExponent
+                                            - BinarySI
+                                            - DecimalSI
+                                            type: string
+                                          value:
+                                            type: string
+                                        type: object
+                                      resource:
+                                        type: string
+                                    type: object
+                                type: object
+                              type: array
+                          type: object
+                        emptyDir:
+                          properties:
+                            medium:
+                              type: string
+                            sizeLimit:
+                              properties:
+                                format:
+                                  enum:
+                                  - DecimalExponent
+                                  - BinarySI
+                                  - DecimalSI
+                                  type: string
+                                value:
+                                  type: string
+                              type: object
+                          type: object
+                        ephemeral:
+                          properties:
+                            volumeClaimTemplate:
+                              properties:
+                                metadata:
+                                  type: object
+                                spec:
+                                  properties:
+                                    accessModes:
+                                      items:
+                                        type: string
+                                      type: array
+                                    dataSource:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      type: object
+                                    dataSourceRef:
+                                      properties:
+                                        apiGroup:
+                                          type: string
+                                        kind:
+                                          type: string
+                                        name:
+                                          type: string
+                                      type: object
+                                    resources:
+                                      properties:
+                                        limits:
+                                          type: object
+                                          x-kubernetes-preserve-unknown-fields: true
+                                        requests:
+                                          type: object
+                                          x-kubernetes-preserve-unknown-fields: true
+                                      type: object
+                                    selector:
+                                      properties:
+                                        matchExpressions:
+                                          items:
+                                            properties:
+                                              key:
+                                                type: string
+                                              operatorProperty:
+                                                type: string
+                                              values:
+                                                items:
+                                                  type: string
+                                                type: array
+                                            type: object
+                                          type: array
+                                        matchLabels:
+                                          type: object
+                                          x-kubernetes-preserve-unknown-fields: true
+                                      type: object
+                                    storageClassName:
+                                      type: string
+                                    volumeMode:
+                                      type: string
+                                    volumeName:
+                                      type: string
+                                  type: object
+                              type: object
+                          type: object
+                        fc:
+                          properties:
+                            fsType:
+                              type: string
+                            lun:
+                              format: int32
+                              nullable: true
+                              type: integer
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            targetWWNs:
+                              items:
+                                type: string
+                              type: array
+                            wwids:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        flexVolume:
+                          properties:
+                            driver:
+                              type: string
+                            fsType:
+                              type: string
+                            options:
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            secretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                          type: object
+                        flocker:
+                          properties:
+                            datasetName:
+                              type: string
+                            datasetUUID:
+                              type: string
+                          type: object
+                        gcePersistentDisk:
+                          properties:
+                            fsType:
+                              type: string
+                            partition:
+                              format: int32
+                              nullable: true
+                              type: integer
+                            pdName:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                          type: object
+                        gitRepo:
+                          properties:
+                            directory:
+                              type: string
+                            repository:
+                              type: string
+                            revision:
+                              type: string
+                          type: object
+                        glusterfs:
+                          properties:
+                            endpoints:
+                              type: string
+                            path:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                          type: object
+                        hostPath:
+                          properties:
+                            path:
+                              type: string
+                            type:
+                              type: string
+                          type: object
+                        iscsi:
+                          properties:
+                            chapAuthDiscovery:
+                              nullable: true
+                              type: boolean
+                            chapAuthSession:
+                              nullable: true
+                              type: boolean
+                            fsType:
+                              type: string
+                            initiatorName:
+                              type: string
+                            iqn:
+                              type: string
+                            iscsiInterface:
+                              type: string
+                            lun:
+                              format: int32
+                              type: integer
+                            portals:
+                              items:
+                                type: string
+                              type: array
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            secretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                            targetPortal:
+                              type: string
+                          type: object
+                        name:
+                          type: string
+                        nfs:
+                          properties:
+                            path:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            server:
+                              type: string
+                          type: object
+                        persistentVolumeClaim:
+                          properties:
+                            claimName:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                          type: object
+                        photonPersistentDisk:
+                          properties:
+                            fsType:
+                              type: string
+                            pdID:
+                              type: string
+                          type: object
+                        portworxVolume:
+                          properties:
+                            fsType:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            volumeID:
+                              type: string
+                          type: object
+                        projected:
+                          properties:
+                            defaultMode:
+                              format: int32
+                              nullable: true
+                              type: integer
+                            sources:
+                              items:
+                                properties:
+                                  configMap:
+                                    properties:
+                                      items:
+                                        items:
+                                          properties:
+                                            key:
+                                              type: string
+                                            mode:
+                                              format: int32
+                                              nullable: true
+                                              type: integer
+                                            path:
+                                              type: string
+                                          type: object
+                                        type: array
+                                      name:
+                                        type: string
+                                      optional:
+                                        nullable: true
+                                        type: boolean
+                                    type: object
+                                  downwardAPI:
+                                    properties:
+                                      items:
+                                        items:
+                                          properties:
+                                            fieldRef:
+                                              properties:
+                                                apiVersion:
+                                                  type: string
+                                                fieldPath:
+                                                  type: string
+                                              type: object
+                                            mode:
+                                              format: int32
+                                              nullable: true
+                                              type: integer
+                                            path:
+                                              type: string
+                                            resourceFieldRef:
+                                              properties:
+                                                containerName:
+                                                  type: string
+                                                divisor:
+                                                  properties:
+                                                    format:
+                                                      enum:
+                                                      - DecimalExponent
+                                                      - BinarySI
+                                                      - DecimalSI
+                                                      type: string
+                                                    value:
+                                                      type: string
+                                                  type: object
+                                                resource:
+                                                  type: string
+                                              type: object
+                                          type: object
+                                        type: array
+                                    type: object
+                                  secret:
+                                    properties:
+                                      items:
+                                        items:
+                                          properties:
+                                            key:
+                                              type: string
+                                            mode:
+                                              format: int32
+                                              nullable: true
+                                              type: integer
+                                            path:
+                                              type: string
+                                          type: object
+                                        type: array
+                                      name:
+                                        type: string
+                                      optional:
+                                        nullable: true
+                                        type: boolean
+                                    type: object
+                                  serviceAccountToken:
+                                    properties:
+                                      audience:
+                                        type: string
+                                      expirationSeconds:
+                                        format: int64
+                                        nullable: true
+                                        type: integer
+                                      path:
+                                        type: string
+                                    type: object
+                                type: object
+                              type: array
+                          type: object
+                        quobyte:
+                          properties:
+                            group:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            registry:
+                              type: string
+                            tenant:
+                              type: string
+                            user:
+                              type: string
+                            volume:
+                              type: string
+                          type: object
+                        rbd:
+                          properties:
+                            fsType:
+                              type: string
+                            image:
+                              type: string
+                            keyring:
+                              type: string
+                            monitors:
+                              items:
+                                type: string
+                              type: array
+                            pool:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            secretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                            user:
+                              type: string
+                          type: object
+                        scaleIO:
+                          properties:
+                            fsType:
+                              type: string
+                            gateway:
+                              type: string
+                            protectionDomain:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            secretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                            sslEnabled:
+                              nullable: true
+                              type: boolean
+                            storageMode:
+                              type: string
+                            storagePool:
+                              type: string
+                            system:
+                              type: string
+                            volumeName:
+                              type: string
+                          type: object
+                        secret:
+                          properties:
+                            defaultMode:
+                              format: int32
+                              nullable: true
+                              type: integer
+                            items:
+                              items:
+                                properties:
+                                  key:
+                                    type: string
+                                  mode:
+                                    format: int32
+                                    nullable: true
+                                    type: integer
+                                  path:
+                                    type: string
+                                type: object
+                              type: array
+                            optional:
+                              nullable: true
+                              type: boolean
+                            secretName:
+                              type: string
+                          type: object
+                        storageos:
+                          properties:
+                            fsType:
+                              type: string
+                            readOnlyProperty:
+                              nullable: true
+                              type: boolean
+                            secretRef:
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                            volumeName:
+                              type: string
+                            volumeNamespace:
+                              type: string
+                          type: object
+                        vsphereVolume:
+                          properties:
+                            fsType:
+                              type: string
+                            storagePolicyID:
+                              type: string
+                            storagePolicyName:
+                              type: string
+                            volumePath:
+                              type: string
+                          type: object
+                      type: object
+                    mount:
+                      properties:
+                        mountPath:
+                          type: string
+                        mountPropagation:
+                          type: string
+                        name:
+                          type: string
+                        readOnlyProperty:
+                          nullable: true
+                          type: boolean
+                        subPath:
+                          type: string
+                        subPathExpr:
+                          type: string
+                      type: object
+                  type: object
+                type: array
+              additionalEnvironmentVariables:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                    valueFrom:
+                      properties:
+                        configMapKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                            optional:
+                              nullable: true
+                              type: boolean
+                          type: object
+                        fieldRef:
+                          properties:
+                            apiVersion:
+                              type: string
+                            fieldPath:
+                              type: string
+                          type: object
+                        resourceFieldRef:
+                          properties:
+                            containerName:
+                              type: string
+                            divisor:
+                              properties:
+                                format:
+                                  enum:
+                                  - DecimalExponent
+                                  - BinarySI
+                                  - DecimalSI
+                                  type: string
+                                value:
+                                  type: string
+                              type: object
+                            resource:
+                              type: string
+                          type: object
+                        secretKeyRef:
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                            optional:
+                              nullable: true
+                              type: boolean
+                          type: object
+                      type: object
+                  type: object
+                type: array
+              dataVolumeClaim:
+                nullable: true
+                properties:
+                  size:
+                    type: string
+                  storageType:
+                    nullable: true
+                    type: string
+                type: object
+              annotations:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              labels:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
