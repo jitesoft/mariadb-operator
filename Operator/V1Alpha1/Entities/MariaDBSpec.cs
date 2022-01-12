@@ -1,9 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using Jitesoft.MariaDBOperator.crd;
 using k8s.Models;
 
-namespace Jitesoft.MariaDBOperator.Resources;
+namespace Jitesoft.MariaDBOperator.V1Alpha1.Entities;
 
 /// <summary>
 /// Spec for a single MariaDB instance.
@@ -58,13 +57,13 @@ public class MariaDBSpec
     /// Additional mounts to add to the primary container.
     /// </summary>
     [JsonPropertyName("additionalVolumes")]
-    public List<ExtraVolumeSpec> AdditionalVolumes { get; set; } = new List<ExtraVolumeSpec>();
+    public IList<ExtraVolumeSpec> AdditionalVolumes { get; set; } = new List<ExtraVolumeSpec>();
 
     /// <summary>
     /// Additional environment variables to add to the primary container.
     /// </summary>
     [JsonPropertyName("additionalEnvironmentVariables")]
-    public List<V1EnvVar> AdditionalEnvironmentVariables { get; set; } = new List<V1EnvVar>();
+    public IList<V1EnvVar> AdditionalEnvironmentVariables { get; set; } = new List<V1EnvVar>();
 
     /// <summary>
     /// Persistent volume claim to use as data storage.
@@ -72,4 +71,17 @@ public class MariaDBSpec
     /// </summary>
     [JsonPropertyName("dataVolumeClaim")]
     public DataPvcSpec? DataVolumeClaim { get; set; } = null;
+
+    /// <summary>
+    /// Optional extra annotations to add to deployment.
+    /// </summary>
+    [JsonPropertyName("annotations")]
+    public IDictionary<string, string> Annotations { get; set; } = new Dictionary<string, string>();
+
+    /// <summary>
+    /// Optional extra labels to add to deployment.
+    /// </summary>
+    [JsonPropertyName("labels")]
+    public IDictionary<string, string> Labels { get; set; } = new Dictionary<string, string>();
+
 }

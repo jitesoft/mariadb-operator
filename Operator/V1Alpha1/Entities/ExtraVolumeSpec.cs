@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using k8s.Models;
 
-namespace Jitesoft.MariaDBOperator.crd;
+namespace Jitesoft.MariaDBOperator.V1Alpha1.Entities;
 
 public class ExtraVolumeSpec
 {
